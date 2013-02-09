@@ -1,8 +1,26 @@
 #!/usr/bin/python
 
+# Originally Created by Ryan Hatfield
+# http://tophathacker.com
+# tophathacker@gmail.com
+
+
+# for setting bit: i |= 1 << b where b is the bit position
+# for zeroing bit: i &= ~(1<<b) where b is teh bit position
+
 import pygtk
 pygtk.require('2.0')
 import gtk
+
+# this is obviously the wrong way to do this, but i'll fix it later
+import sys
+sys.path.insert(0,'../shiftModule/build/lib.linux-armv6l-2.7')
+try:
+  import shift
+except:
+  print "build shiftModule first with\npython setup.py build\nfrom the shiftModule directory"
+  sys.exit()
+
 from collections import deque
 
 class Base:
@@ -19,14 +37,26 @@ class Base:
 
   def dumpRegister(self,widget):
     for obj in self.buttonBox:
-      temp = obj.get_label().split('\n')
-      obj.set_label(temp[0] + "\n" + temp[0])
+      tempNumb = obj.get_label().split('\n')
+      obj.set_label(tempNumb[0] + "\n" + tempNumb[0])
+      tempName = obj.get_name().split('_')
+      if tempNumb[0] == "1":
+        self.register |= 1 << int(tempName[1])
+      else:
+        self.register &= ~(1<<int(tempName[1]))
+    shift.shift_out(self.register)
 
   def __init__(self):
     # setup display deque
     maxPoints = 50
     self.data = deque([0,0,0,0,0],maxPoints)
     
+		# register variable
+    self.register = 0
+
+		# setup pins for shift module
+    shift.setup_pins()
+
     # setup window
     self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
     self.window.set_position(gtk.WIN_POS_CENTER)
