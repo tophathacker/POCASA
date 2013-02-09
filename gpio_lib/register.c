@@ -1,7 +1,7 @@
 // Build command:  gcc IOToggle_Clib.c -o IOToggle_Clib -I/usr/local/include -L/usr/local/lib -lwiringPi
 #define DEBUG
 
-#include <python.h>
+//#include <python.h>
 #include <wiringPi.h>
 #include <unistd.h>
 //#include <stdio.h>
