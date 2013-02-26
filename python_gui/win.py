@@ -3,6 +3,7 @@
 import pygtk
 pygtk.require('2.0')
 import gtk
+from collections import deque
 
 class Base:
   def destroy(self, widget, data=None):
@@ -10,91 +11,55 @@ class Base:
     print "Thanks for playing!"
     gtk.main_quit()
 
-  def handleButton(self, widget):
-    print widget.get_name()
-
   def handleRegButton(self,widget):
-    if widget.get_label() == "0":
-      widget.set_label("1")
+    if widget.get_label().split('\n')[0] == "0":
+      widget.set_label("1\n" + widget.get_label().split('\n')[1])
     else:
-      widget.set_label("0")
+      widget.set_label("0\n" + widget.get_label().split('\n')[1])
 
-  def shiftIn(self, widget):
-    #do nothing for now
-
-  def myhide(self, widget):
-    if self.button1.get_visible() : 
-      self.button1.hide()
-      self.exitLabel.set_text("Button is gone!")
-    else:
-      self.button1.show()
-      self.exitLabel.set_text("Button is Back!")
+  def flipRegister(self,widget):
+    for obj in self.buttonBox:
+      temp = obj.get_label().split('\n')
+      obj.set_label(temp[0] + "\n" + temp[0])
 
   def __init__(self):
+    # setup display deque
+    maxPoints = 50
+    self.data = deque([0,0,0,0,0],maxPoints)
+    
+    # setup window
     self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
     self.window.set_position(gtk.WIN_POS_CENTER)
-    self.window.set_size_request(500,500)
+    self.window.set_size_request(500,200)
     self.window.set_title("Pocasa - Pi")
+    self.window.connect("destroy", self.destroy)
 
-    self.reg01 = gtk.Button("0")
-    self.reg01.connect("clicked", self.handleRegButton)
-
-
-    self.button1 = gtk.Button("Exit")
-    self.button1.connect("clicked", self.destroy)
-    self.button1.set_tooltip_text("This button closes this window")
-    self.button2 = gtk.Button("Toggle")
-    self.button2.connect("clicked", self.handleButton)
-    self.button2.set_name("button2")
-    self.exitLabel = gtk.Label("this will exit! -->")
-
+    # main vertical layout
     self.mainBox = gtk.VBox()
 
+    # hlayout for register buttons
     self.buttonBox = gtk.HBox()
-    self.labelBox = gtk.HBox()
 
-    for i in range(10):
-      button = gtk.Button("0")
+    # 16 registers
+    for i in range(16):
+      button = gtk.Button("0\n0")
       button.set_name("reg_"+str(i))
       button.connect("clicked",self.handleRegButton)
       self.buttonBox.pack_start(button)
-      label = gtk.Label("0")
-      label.set_name("label_" + str(i))
-      self.labelBox.pack_start(label)
-
-    
-    self.reg_01 = gtk.Button("0")
-    self.reg_01.connect("clicked", self.handleRegButton)
-    self.buttonBox.pack_start(self.reg_01)
-    
-    self.reg_01 = gtk.Button("0")
-    self.reg_01.connect("clicked", self.handleRegButton)
-    self.buttonBox.pack_start(self.reg_01)
-    
-    self.reg_01 = gtk.Button("0")
-    self.reg_01.connect("clicked", self.handleRegButton)
-    self.buttonBox.pack_start(self.reg_01)
-    
-    self.reg_01 = gtk.Button("0")
-    self.reg_01.connect("clicked", self.handleRegButton)
-    self.buttonBox.pack_start(self.reg_01)
-    
+    # add buttons to main layout 
     self.mainBox.pack_start(self.buttonBox)
-    self.mainBox.pack_start(self.labelBox)
-    self.box1 = gtk.HBox()
-    self.box1.pack_start(self.exitLabel)
-    self.box1.pack_start(self.button1)
-    self.mainBox.pack_start(self.box1)
+    
+    # options layout
+    self.optionBox = gtk.HBox()
+    self.btnDump = gtk.Button("Dump")
+    self.btnDump.connect("clicked", self.flipRegister)
+    self.optionBox.pack_start(self.btnDump)
+    self.mainBox.pack_start(self.optionBox)
 
-    self.box2 = gtk.HBox()
-    self.box2.pack_start(self.button2)
-    self.mainBox.pack_start(self.box2)
-
+    # add main layout to the window
     self.window.add(self.mainBox)
 
-
     self.window.show_all()
-    self.window.connect("destroy", self.destroy)
 
   def main(self):
     gtk.main()
