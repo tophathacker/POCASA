@@ -17,7 +17,7 @@ class Base:
     else:
       widget.set_label("0\n" + widget.get_label().split('\n')[1])
 
-  def flipRegister(self,widget):
+  def dumpRegister(self,widget):
     for obj in self.buttonBox:
       temp = obj.get_label().split('\n')
       obj.set_label(temp[0] + "\n" + temp[0])
@@ -52,7 +52,7 @@ class Base:
     # options layout
     self.optionBox = gtk.HBox()
     self.btnDump = gtk.Button("Dump")
-    self.btnDump.connect("clicked", self.flipRegister)
+    self.btnDump.connect("clicked", self.dumpRegister)
     self.optionBox.pack_start(self.btnDump)
     self.mainBox.pack_start(self.optionBox)
 
