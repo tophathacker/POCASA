@@ -92,8 +92,15 @@ class Base:
     self.window.show_all()
 
   def main(self):
-    gtk.main()
+      gtk.main()
 
 if __name__ == "__main__":
-  base = Base()
-  base.main()
+  # handle args
+  nogui = False
+  for arg in sys.argv:
+    if arg == "-nogui":
+      nogui = True
+
+  if nogui == False:
+    base = Base()
+    base.main()

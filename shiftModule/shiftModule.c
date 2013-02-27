@@ -1,9 +1,15 @@
+// Created by Ryan Hatfield
+// http://tophathacker.com
+// tophathacker@gmail.com
+
 #include <Python.h>
 #include <wiringPi.h>
 
 //define methods (not already defined by python.h)
 static int setupInput(const int pin);
 static int setupOutput(const int pin);
+static int shiftbits(uint16_t input);
+static int pauseMe(long unsigned int time);
 
 static PyObject* setup_pins(PyObject* self, PyObject* args)
 {
@@ -46,58 +52,85 @@ static int setupOutput(const int pin)
 
 static PyObject* shift_out(PyObject* self, PyObject* args)
 {
-  	//  int shiftOut(int clock, int data, int dump, char input[])
-    const int clock = 0;
-		const int data = 1;
-		const int dump = 2;
-
-    int i; 
 		uint16_t input = 65534;
 		if(!PyArg_ParseTuple(args,"i",&input))
 			return NULL;
-   
-	 	printf("%u",input);
-		 
-    for(i=0; i < 16; i++)
-    {
-      digitalWrite(data,input & 1);
-			//printf("%u",input & 1);
-			input >>= 1;
-      digitalWrite(clock,1);
-      //pauseMe(10);
-      digitalWrite(clock,0);
-      //pauseMe(10);
-    }
     
-    digitalWrite(dump,1);
-    //pauseMe(10);
-    digitalWrite(dump,0);
-    //pauseMe(200);
-    
+    shiftbits(input);
+
 		Py_RETURN_NONE;
 
 }
 
-static PyObject* print_something(PyObject* self, PyObject* args)
+static int shiftbits(uint16_t input)
 {
-  long unsigned int i; 
-  
-  if (!PyArg_ParseTuple(args, "i", &i))
-    return NULL;
-  
-  printf("Hello %lu!\n", i);
-  
-  Py_RETURN_NONE;
+  const int clock = 0;
+  const int data = 1;
+  const int dump = 2;
+
+  int i;
+
+  for(i=0; i < 16; i++)
+  {
+    digitalWrite(data,input & 1);
+    input >>= 1;
+    digitalWrite(clock,1);
+    digitalWrite(clock,0);
+  }
+
+  digitalWrite(dump,1);
+  digitalWrite(dump,0);
+  return 0;
 }
 
-
+static int pauseMe(long unsigned int time)
+{
+  int i;
+  for(i=0; i<time; i++);
+  return 0;
+}
 
 static PyObject* readXY(PyObject *self, PyObject *args)
 {
-  long unsigned int x,y;
-
-  if(!PyArg_ParseTuple(args, "ii", &x, &y))
+  uint16_t oldreg = 65534;
+  if(!PyArg_ParseTuple(args,"ii",oldreg))
     return NULL;
+
+  const int selectPin = 7;
+  const int clockPin = 4;
+  const int pinX = 7;
+  const int pinY = 3;
+
+  // bring selectPin low?
+  oldreg &= ~(1 << selectPin);
+  shiftbits(oldreg);
+
+  // dummy Clock
+  oldreg |= 1 << clockPin;
+  shiftbits(oldreg);
+  oldreg &= ~(1 << clockPin);
+  shiftbits(oldreg);
+  oldreg |= 1 << clockPin;
+  shiftbits(oldreg);
+  oldreg &= ~(1 << clockPin);
+  shiftbits(oldreg);
+
+  long unsigned int x = 0,y = 0;
+  int i;
+  for(i=11; i>0; i--)
+  {
+    oldreg |= 1 << clockPin;
+    shiftbits(oldreg);
+    oldreg &= ~(1 << clockPin);
+    shiftbits(oldreg);
+
+    x |= digitalRead(pinX) << i;
+    y |= digitalRead(pinY) << i;
+  }
+
+  oldreg |= 1 << selectPin;
+  shiftbits(oldreg);
+
   return Py_BuildValue("ii",x,y);
 }
 
@@ -105,7 +138,6 @@ static PyMethodDef shiftMethods[] =
 {
   {"shift_out",shift_out,METH_VARARGS,"shift out the bits"},
   {"setup_pins",setup_pins,METH_VARARGS,"setup input/output pins"},
-  {"print_something", print_something, METH_VARARGS, "Print something."},
   {"readXY",readXY,METH_VARARGS,"something"},
   {NULL, NULL, 0, NULL}
 };
