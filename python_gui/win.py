@@ -44,7 +44,22 @@ class Base:
         self.register |= 1 << int(tempName[1])
       else:
         self.register &= ~(1<<int(tempName[1]))
-    shift.shift_out(self.register)
+    self.register = shift.shift_out(self.register)
+  
+  def zeroDAC(self,widget):
+    self.register = shift.set_dac(self.register,0)
+    self.setReg(self.register)
+
+  def setReg(self,register):
+    count = 0
+    for obj in self.buttonBox:
+      tempNumb = obj.get_label().split('\n')
+      obj.set_label(tempNumb[0] + "\n" + str(register >> count))
+      count+=1
+
+  def setDAC(self,widget):
+    self.register = shift.set_dac(self.register,65791)
+    self.setReg(self.register)
 
   def __init__(self):
     # setup display deque
@@ -83,6 +98,12 @@ class Base:
     self.optionBox = gtk.HBox()
     self.btnDump = gtk.Button("Dump")
     self.btnDump.connect("clicked", self.dumpRegister)
+    self.btnZero = gtk.Button("Zero")
+    self.btnZero.connect("clicked", self.zeroDAC)
+    self.btnSet = gtk.Button("Set")
+    self.btnSet.connect("clicked", self.setDAC)
+    self.optionBox.pack_start(self.btnSet)
+    self.optionBox.pack_start(self.btnZero)
     self.optionBox.pack_start(self.btnDump)
     self.mainBox.pack_start(self.optionBox)
 
