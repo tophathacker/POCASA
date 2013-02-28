@@ -101,6 +101,7 @@ static uint16_t _setdac(uint16_t inoldreg, uint32_t newsetting)
 //{
   // set DAC select bit
   oldreg &= ~(1 << select);
+  _shiftbits(oldreg);
   oldreg &= ~(1 << clock);
   _shiftbits(oldreg);
   int i;
@@ -111,6 +112,7 @@ static uint16_t _setdac(uint16_t inoldreg, uint32_t newsetting)
       oldreg |= 1 << data;
     else
       oldreg &= ~(1<<data);
+    _shiftbits(oldreg);
     // set clock high
     oldreg |= 1 << clock;
     _shiftbits(oldreg);
