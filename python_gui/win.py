@@ -11,6 +11,7 @@
 import pygtk
 pygtk.require('2.0')
 import gtk
+import time
 
 # this is obviously the wrong way to do this, but i'll fix it later
 import sys
@@ -55,7 +56,7 @@ class Base:
     self.setReg(self.register)
 
   def setReg(self,register):
-    print str(register)
+    #print str(register)
     count = 0
     for obj in self.buttonBox:
       tempNumb = obj.get_label().split('\n')
@@ -66,10 +67,67 @@ class Base:
     self.setReg(1022)
 
   def setDAC(self,widget):
-    if self.shiftLoaded:
-      self.register = shift.set_dac(self.register, )
-    self.setReg(self.register)
-  
+    #if self.shiftLoaded:
+    #  self.register = shift.set_dac(self.register, int(
+    final = 0
+    a = int(self.dacIntA.get_text())
+    b = int(self.dacIntB.get_text())
+    c = int(self.dacIntC.get_text())
+    d = int(self.dacIntD.get_text())
+    for i in range(7,-1,-1):
+      if a >> i & 1:
+        final |= 1 << (i + 24)
+      else:
+        final &= ~(1 << (i + 24))
+    for i in range(7,-1,-1):
+      if b >> i & 1:
+        final |= 1 << (i + 16)
+      else:
+        final &= ~(1 << (i + 16))
+    for i in range(7,-1,-1):
+      if c >> i & 1:
+        final |= 1 << (i + 8)
+      else:
+        final &= ~(1 << (i + 8))
+    for i in range(7,-1,-1):
+      if d >> i & 1:
+        final |= 1 << i
+      else:
+        final &= ~(1 << i)
+    #print str(bin(final))
+    #print final
+    #if self.shiftLoaded:
+    #  self.register = shift.set_dac(self.register,final)
+    #self.setReg(self.register)
+    self.set_dac(final)
+ 
+  def set_dac(self,number):
+    select = 6
+    clock = 3
+    data = 2
+    
+    self.register &= ~(1 << clock) # set clock low
+    shift.shift_out(self.register)
+    self.register &= ~(1 << select) # pull chip select low
+    shift.shift_out(self.register)
+   
+    for i in range(31,-1,-1):
+      if number >> i & 1:
+        self.register |= 1 << data
+        # print "set bit " + str(i) + " high \n"
+      else:
+        self.register &= ~(1 << data)
+        # print "set bit " + str(i) + " low \n"
+      shift.shift_out(self.register) #set data bit
+      self.register |= 1 << clock # set clock high
+      shift.shift_out(self.register)
+      self.register &= ~(1 << clock) # set clock low again
+      shift.shift_out(self.register)
+    self.register |= 1 << select # set chip select high again
+    self.register = shift.shift_out(self.register)
+    
+
+ 
   def dacIntChanged(self,widget):
     hexer = "%x" % int(widget.get_text())
     biner = bin(int(widget.get_text()))[2:]
@@ -102,7 +160,7 @@ class Base:
       self.dacBinC.set_text(biner)
     elif name == "dacHexD":
       self.dacIntD.set_text(inter)
-      self.dacBinC.set_text(biner)
+      self.dacBinD.set_text(biner)
 
   def dacBinChanged(self,widget):
     inter = str(int(widget.get_text(),2))
@@ -183,19 +241,19 @@ class Base:
     self.dacIntBox = gtk.HBox()
     self.dacIntLabel = gtk.Label("Int")
     self.dacIntBox.pack_start(self.dacIntLabel,True,True,10)
-    self.dacIntA = gtk.Entry(16)
+    self.dacIntA = gtk.Entry(3)
     self.dacIntA.set_name("dacIntA")
     self.dacIntA.connect("changed",self.dacIntChanged)
     self.dacIntBox.pack_start(self.dacIntA,True,True,10)
-    self.dacIntB = gtk.Entry(16)
+    self.dacIntB = gtk.Entry(3)
     self.dacIntB.set_name("dacIntB")
     self.dacIntB.connect("changed",self.dacIntChanged)
     self.dacIntBox.pack_start(self.dacIntB,True,True,10)
-    self.dacIntC = gtk.Entry(16)
+    self.dacIntC = gtk.Entry(3)
     self.dacIntC.set_name("dacIntC")
     self.dacIntC.connect("changed",self.dacIntChanged)
     self.dacIntBox.pack_start(self.dacIntC,True,True,10)
-    self.dacIntD = gtk.Entry(16)
+    self.dacIntD = gtk.Entry(3)
     self.dacIntD.set_name("dacIntD")
     self.dacIntD.connect("changed",self.dacIntChanged)
     self.dacIntBox.pack_start(self.dacIntD,True,True,10)
@@ -203,19 +261,19 @@ class Base:
     self.dacHexBox = gtk.HBox()
     self.dacHexLabel = gtk.Label("Hex")
     self.dacHexBox.pack_start(self.dacHexLabel,True,True,10)
-    self.dacHexA = gtk.Entry(16)
+    self.dacHexA = gtk.Entry(2)
     self.dacHexA.set_name("dacHexA")
     self.dacHexA.connect("changed",self.dacHexChanged)
     self.dacHexBox.pack_start(self.dacHexA,True,True,10)
-    self.dacHexB = gtk.Entry(16)
+    self.dacHexB = gtk.Entry(2)
     self.dacHexB.set_name("dacHexB")
     self.dacHexB.connect("changed",self.dacHexChanged)
     self.dacHexBox.pack_start(self.dacHexB,True,True,10)
-    self.dacHexC = gtk.Entry(16)
+    self.dacHexC = gtk.Entry(2)
     self.dacHexC.set_name("dacHexC")
     self.dacHexC.connect("changed",self.dacHexChanged)
     self.dacHexBox.pack_start(self.dacHexC,True,True,10)
-    self.dacHexD = gtk.Entry(16)
+    self.dacHexD = gtk.Entry(2)
     self.dacHexD.set_name("dacHexD")
     self.dacHexD.connect("changed",self.dacHexChanged)
     self.dacHexBox.pack_start(self.dacHexD,True,True,10)
@@ -223,19 +281,19 @@ class Base:
     self.dacBinBox = gtk.HBox()
     self.dacBinLabel = gtk.Label("Bin")
     self.dacBinBox.pack_start(self.dacBinLabel,True,True,10)
-    self.dacBinA = gtk.Entry(16)
+    self.dacBinA = gtk.Entry(8)
     self.dacBinA.set_name("dacBinA")
     self.dacBinA.connect("changed",self.dacBinChanged)
     self.dacBinBox.pack_start(self.dacBinA,True,True,10)
-    self.dacBinB = gtk.Entry(16)
+    self.dacBinB = gtk.Entry(8)
     self.dacBinB.set_name("dacBinB")
     self.dacBinB.connect("changed",self.dacBinChanged)
     self.dacBinBox.pack_start(self.dacBinB,True,True,10)
-    self.dacBinC = gtk.Entry(16)
+    self.dacBinC = gtk.Entry(8)
     self.dacBinC.set_name("dacBinC")
     self.dacBinC.connect("changed",self.dacBinChanged)
     self.dacBinBox.pack_start(self.dacBinC,True,True,10)
-    self.dacBinD = gtk.Entry(16)
+    self.dacBinD = gtk.Entry(8)
     self.dacBinD.set_name("dacBinD")
     self.dacBinD.connect("changed",self.dacBinChanged)
     self.dacBinBox.pack_start(self.dacBinD,True,True,10)

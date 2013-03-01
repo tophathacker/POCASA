@@ -96,19 +96,21 @@ static uint16_t _setdac(uint16_t inoldreg, uint32_t newsetting)
   const int select = 6;
   const int clock = 3;
   const int data = 2;
-  uint16_t oldreg = inoldreg;
+  uint16_t oldreg = 0;  //should be inoldreg, but i'm testing.
   //for(;;)
 //{
   // set DAC select bit
-  oldreg &= ~(1 << select);
-  _shiftbits(oldreg);
   oldreg &= ~(1 << clock);
   _shiftbits(oldreg);
+  printf("%i",newsetting);
+  oldreg &= ~(1 << select);
+  _pauseMe(10000);
+  _shiftbits(oldreg);
   int i;
-  for(i=31; i>=0; i--)
+  int j;
+  for (j = 31; j >= 0; j--)
   {
-    // set data bit
-    if((newsetting >> i) & 1)
+    if ((newsetting & (1 << (j-1))) != 0)
       oldreg |= 1 << data;
     else
       oldreg &= ~(1<<data);
@@ -135,7 +137,7 @@ static PyObject* set_dac(PyObject *self, PyObject *args)
   //printf("set_dac begin");
   uint16_t oldreg = 0;
   uint32_t newsetting = 0;
-  if(!PyArg_ParseTuple(args,"ii",&oldreg,&newsetting))
+  if(!PyArg_ParseTuple(args,"kk",&oldreg,&newsetting))
     return NULL;
   oldreg = _setdac(oldreg,newsetting);
   return Py_BuildValue("i",oldreg);
