@@ -110,7 +110,7 @@ static uint16_t _setdac(uint16_t inoldreg, uint32_t newsetting)
   int j;
   for (j = 31; j >= 0; j--)
   {
-    if ((newsetting & (1 << (j-1))) != 0)
+    if ((newsetting >> j) & 1)
       oldreg |= 1 << data;
     else
       oldreg &= ~(1<<data);
