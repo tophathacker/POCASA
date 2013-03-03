@@ -1,1 +1,7 @@
-make sure to install python-gobject and
+make sure to install some of these?
+
+python-gobject
+libcanberra-gtk3-0
+gir1.2-gtk-3.0
+libgtk-3-0
+python-gi-cairo
