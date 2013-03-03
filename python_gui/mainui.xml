@@ -503,11 +503,14 @@
                         <property name="can_focus">False</property>
                         <property name="spacing">10</property>
                         <child>
-                          <object class="GtkDrawingArea" id="drawingarea2">
+                          <object class="GtkDrawingArea" id="area2">
                             <property name="width_request">125</property>
                             <property name="height_request">125</property>
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
+                            <property name="events">GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_STRUCTURE_MASK</property>
+                            <signal name="button-press-event" handler="on_area_press" swapped="no"/>
+                            <signal name="draw" handler="on_area_draw" swapped="no"/>
                           </object>
                           <packing>
                             <property name="expand">False</property>
