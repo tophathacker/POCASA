@@ -12,7 +12,7 @@ import pygtk
 pygtk.require('2.0')
 import gtk
 import time
-
+from threading import Thread
 # this is obviously the wrong way to do this, but i'll fix it later
 import sys
 sys.path.insert(0,'../shiftModule/build/lib.linux-armv6l-2.7')
@@ -24,6 +24,17 @@ except:
   #sys.exit()
 
 from collections import deque
+
+class getadc(Thread):
+  def __init__(self,parent):
+    self.parent = parent
+    Thread.__init__(self)
+    self.start()
+  def run(self):
+    self.value = 1
+    while 1:
+      print shift.get_adc()
+      time.sleep(1)
 
 class Base:
   # Base class for the gui
@@ -64,7 +75,7 @@ class Base:
       count+=1
 
   def setRegTest(self,widget):
-    print shift.get_adc() 
+    self.the_thread = getadc(self)
 
   def setDAC(self,widget):
     #if self.shiftLoaded:
