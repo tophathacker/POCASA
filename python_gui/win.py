@@ -18,7 +18,7 @@ import sys
 sys.path.insert(0,'../shiftModule/build/lib.linux-armv6l-2.7')
 try:
   import shift
-  self.hiftLoaded = True
+  shiftLoaded = True
 except:
   print "build shiftModule first with\npython setup.py build\nfrom the shiftModule directory"
   #sys.exit()
@@ -64,7 +64,7 @@ class Base:
       count+=1
 
   def setRegTest(self,widget):
-    self.setReg(1022)
+    print shift.get_adc() 
 
   def setDAC(self,widget):
     #if self.shiftLoaded:
