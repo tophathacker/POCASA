@@ -10,20 +10,19 @@ static int _setupInput(const int pin);
 static int _setupOutput(const int pin);
 static uint16_t _shiftbits(uint16_t input);
 static int _pauseMe(long unsigned int time);
+static uint32_t _getadc();
 
-static uint16_t _reg;
+// pin defines
+const int ClockPin = 0;
+const int DataPin = 1;
+const int DumpPin = 2;
+const int inputX = 7;
+const int inputY = 3;
 
 static PyObject* setup_pins(PyObject* self, PyObject* args)
 {
   if(wiringPiSetup() == -1)
     exit(1);
-
-  // pin defines
-  const int ClockPin = 0;
-  const int DataPin = 1;
-  const int DumpPin = 2;
-  const int inputX = 7;
-  const int inputY = 3;
 
   // setup inputs
   _setupInput(inputX);
@@ -90,58 +89,69 @@ static int _pauseMe(long unsigned int time)
   for(i=0; i<time; i++);
   return 0;
 }
+
+static uint32_t _getadc()
+{
+  uint32_t returnValue = 0;
+
+  return returnValue;
+}
+
+static PyObject* get_adc(PyObject *self, PyObject *args)
+{
+  uint16_t x = 50;
+  uint16_t y = 90;
+  uint32_t xy = _getadc();
+  int i;
+  for (i = 31; i >= 16; i--)
+  {
+    x |= ((xy >> i) & 1) << (i - 16);
+  }
+  for (i = 15; i >= 0; i--)
+  {
+    y |= ((xy >> i) & 1) << i;
+  }
+  return Py_BuildValue("ii",x,y);
+}
+
 static uint16_t _setdac(uint16_t inoldreg, uint32_t newsetting)
 {
-  //printf("start of dac");
   const int select = 6;
   const int clock = 3;
   const int data = 2;
-  uint16_t oldreg = 0;  //should be inoldreg, but i'm testing.
-  //for(;;)
-//{
-  // set DAC select bit
-  oldreg &= ~(1 << clock);
+  uint16_t oldreg = 0;  // should be inoldreg, but i'm testing.
+  
+  oldreg &= ~(1 << clock); // make sure clock is low
   _shiftbits(oldreg);
-  printf("%i",newsetting);
-  oldreg &= ~(1 << select);
+  oldreg &= ~(1 << select); // set select pin low
   _pauseMe(10000);
   _shiftbits(oldreg);
-  int i;
+  
   int j;
   for (j = 31; j >= 0; j--)
   {
-    if ((newsetting >> j) & 1)
+    if ((newsetting >> j) & 1) // set data bit
       oldreg |= 1 << data;
     else
       oldreg &= ~(1<<data);
     _shiftbits(oldreg);
-    // set clock high
-    oldreg |= 1 << clock;
+    oldreg |= 1 << clock; // set clock high
     _shiftbits(oldreg);
-    //_pauseMe(1000);
-    //set clock low
-    oldreg &= ~(1<<clock);
+    oldreg &= ~(1<<clock); // set clock low
     _shiftbits(oldreg);
-    //printf("%i",(newsetting>>j) & 1);
   }
-  oldreg |= 1 << select;
+  oldreg |= 1 << select; // set select high again
   _shiftbits(oldreg);
-  //_pauseMe(10000000);
-  //}
-  //printf("%lu",oldreg);
-  //printf("end of dac");
   return oldreg;
 }
 static PyObject* set_dac(PyObject *self, PyObject *args)
 {
-  //printf("set_dac begin");
   uint16_t oldreg = 0;
   uint32_t newsetting = 0;
   if(!PyArg_ParseTuple(args,"kk",&oldreg,&newsetting))
     return NULL;
   oldreg = _setdac(oldreg,newsetting);
   return Py_BuildValue("i",oldreg);
-  //Py_RETURN_NONE;
 }
 
 static PyObject* read_xy(PyObject *self, PyObject *args)
@@ -194,6 +204,7 @@ static PyMethodDef shiftMethods[] =
   {"setup_pins",setup_pins,METH_VARARGS,"setup input/output pins"},
   {"read_xy",read_xy,METH_VARARGS,"something"},
   {"set_dac",set_dac,METH_VARARGS,"something2"},
+  {"get_adc",get_adc,METH_VARARGS,"something3"},
   {NULL, NULL, 0, NULL}
 };
    
