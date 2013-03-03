@@ -122,7 +122,7 @@ static uint16_t _setdac(uint16_t inoldreg, uint32_t newsetting)
     //set clock low
     oldreg &= ~(1<<clock);
     _shiftbits(oldreg);
-    //printf("%i",(newsetting>>i) & 1);
+    //printf("%i",(newsetting>>j) & 1);
   }
   oldreg |= 1 << select;
   _shiftbits(oldreg);

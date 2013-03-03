@@ -96,10 +96,10 @@ class Base:
         final &= ~(1 << i)
     #print str(bin(final))
     #print final
-    #if self.shiftLoaded:
-    #  self.register = shift.set_dac(self.register,final)
-    #self.setReg(self.register)
-    self.set_dac(final)
+    if self.shiftLoaded:
+      self.register = shift.set_dac(self.register,final)
+    self.setReg(self.register)
+    #self.set_dac(final)
  
   def set_dac(self,number):
     select = 6

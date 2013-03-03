@@ -17,7 +17,7 @@ class POCASA_Pi():
     builder.connect_signals(self)
     self.window = builder.get_object("window1")
     self.clicks = [];
-     
+ 
   def destroy(widget,self):
     Gtk.main_quit()
 
