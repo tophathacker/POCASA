@@ -24,6 +24,8 @@ except:
   #sys.exit()
 
 from collections import deque
+pointsX = deque([],10)
+pointsY = deque([],10)
 
 class getadc(Thread):
   def __init__(self,parent):
@@ -31,13 +33,18 @@ class getadc(Thread):
     Thread.__init__(self)
     self.start()
   def run(self):
-    self.value = 1
+    self.wait = .5
     while 1:
-      print shift.get_adc()
-      time.sleep(1)
+      xy = shift.get_adc(self.parent.register)
+      print xy
+      #self.parent.testBox.set_text(str(xy[0]) + "," + str(xy[1])) 
+#      self.parent.pointsX.append(xy[0])
+#      self.parent.pointsY.append(xy[1])
+      time.sleep(self.wait)
 
 class Base:
   # Base class for the gui
+  
   def destroy(self, widget, data=None):
     #this is where you put stuff
     print "Thanks for playing!"
@@ -189,7 +196,19 @@ class Base:
     elif name == "dacBinD":
       self.dacIntD.set_text(inter)
       self.dacHexD.set_text(hexer)
-    
+  def mapInt(oldmin,oldmax,newmin,newmax,value):
+    oldspan = oldmax - oldmin
+    newspan = newmax - newmin
+
+    valuescaled = float(value - oldmin) / float(oldspan)
+    return newmin + (valuescaled * newspan)
+
+  def area_expose_cb(self, area, event):
+    self.style = self.area.get_style()
+    self.gc = self.style.fg_gc[gtk.STATE_NORMAL]
+    for i in range[0,len(self.pointsX)]:
+      self.area.window.draw_line(self.gc, 0, 0, 100,100)
+    return True 
 
   def __init__(self):
     # setup all gui stuff
@@ -334,11 +353,18 @@ class Base:
     self.optionBox.pack_start(self.btnZero)
     
     self.mainBox.pack_start(self.optionBox)
+    self.testBox = gtk.Entry()
+    self.mainBox.pack_start(self.testBox)
+
+    self.area = gtk.DrawingArea()
+    self.area.set_size_request(100,100)
+    #self.area.connect("expose-event", self.area_expose_cb)
+    self.mainBox.pack_start(self.area)
 
     # add main layout to the window
     self.window.add(self.mainBox)
-
     self.window.show_all()
+
 
   def main(self):
       gtk.main()

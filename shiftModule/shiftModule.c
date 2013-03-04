@@ -4,20 +4,21 @@
 
 #include <Python.h>
 #include <wiringPi.h>
+#include <time.h>
 
 //define methods (not already defined by python.h)
 static int _setupInput(const int pin);
 static int _setupOutput(const int pin);
 static uint16_t _shiftbits(uint16_t input);
 static int _pauseMe(long unsigned int time);
-static uint32_t _getadc();
+static uint32_t _getadc(uint16_t oldreg);
 
 // pin defines
 const int ClockPin = 0;
 const int DataPin = 1;
 const int DumpPin = 2;
 const int inputX = 7;
-const int inputY = 3;
+const int inputY = 6;
 
 static PyObject* setup_pins(PyObject* self, PyObject* args)
 {
@@ -90,18 +91,54 @@ static int _pauseMe(long unsigned int time)
   return 0;
 }
 
-static uint32_t _getadc()
+static uint32_t _getadc(uint16_t oldreg)
 {
-  uint32_t returnValue = 0;
+  const int AdcClock = 4;
+  const int AdcCS = 7;
 
+  uint32_t returnValue = 0;
+  
+  oldreg &= ~(1 << AdcClock); // make sure clock is low
+  _shiftbits(oldreg);
+  oldreg &= ~(1 << AdcCS);    // make pull CS low
+  _shiftbits(oldreg);
+  nanosleep((struct timespec[]){{0, 12000}}, NULL);
+  oldreg |= 1 << AdcClock;
+  _shiftbits(oldreg);
+  oldreg &= ~(1 << AdcClock); 
+  _shiftbits(oldreg);
+  oldreg |= 1 << AdcClock;
+  _shiftbits(oldreg);
+  oldreg &= ~(1 << AdcClock);
+  _shiftbits(oldreg);
+
+  int i;
+  for (i = 15; i >=0; i--)
+  {
+    oldreg |= 1 << AdcClock;
+    _shiftbits(oldreg);
+    oldreg &= ~(1 << AdcClock);
+    _shiftbits(oldreg);
+    returnValue |= digitalRead(inputX) << i;
+    returnValue |= digitalRead(inputY) << (i + 16);
+  }
+  
+  oldreg |= 1 << AdcCS; // pull CS high again
+  _shiftbits(oldreg);
   return returnValue;
 }
 
 static PyObject* get_adc(PyObject *self, PyObject *args)
 {
-  uint16_t x = 50;
-  uint16_t y = 90;
-  uint32_t xy = _getadc();
+  uint16_t x = 0;
+  uint16_t y = 0;
+
+  uint16_t oldreg = 0;
+  if(!PyArg_ParseTuple(args,"k",&oldreg))
+    return NULL;
+ 
+  uint32_t xy = _getadc(oldreg);
+  printf("from c: %lu",xy);
   int i;
   for (i = 31; i >= 16; i--)
   {
